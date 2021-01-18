@@ -127,6 +127,7 @@ export interface TabbedFormProps
     basePath?: string;
     children: ReactNode;
     className?: string;
+    classes?: ClassesOverride<typeof useStyles>;
     initialValues?: any;
     margin?: 'none' | 'normal' | 'dense';
     record?: Record;
@@ -184,7 +185,6 @@ export const TabbedFormView: FC<TabbedFormViewProps> = props => {
         margin,
         ...rest
     } = props;
-    const tabsWithErrors = findTabsWithErrors(children, form.getState().errors);
     const classes = useStyles(props);
     const match = useRouteMatch();
     const location = useLocation();
@@ -200,7 +200,6 @@ export const TabbedFormView: FC<TabbedFormViewProps> = props => {
                 {
                     classes,
                     url,
-                    tabsWithErrors,
                 },
                 children
             )}
@@ -210,34 +209,31 @@ export const TabbedFormView: FC<TabbedFormViewProps> = props => {
                 on tabs not in focus. The tabs receive a `hidden` property, which they'll
                 use to hide the tab using CSS if it's not the one in focus.
                 See https://github.com/marmelab/react-admin/issues/1866 */}
-                {Children.map(
-                    children,
-                    (tab: ReactElement, index) =>
-                        tab && (
-                            <Route
-                                exact
-                                path={escapePath(
-                                    getTabFullPath(tab, index, url)
-                                )}
-                            >
-                                {routeProps =>
-                                    isValidElement<any>(tab)
-                                        ? React.cloneElement(tab, {
-                                              intent: 'content',
-                                              resource,
-                                              record,
-                                              basePath,
-                                              hidden: !routeProps.match,
-                                              variant:
-                                                  tab.props.variant || variant,
-                                              margin:
-                                                  tab.props.margin || margin,
-                                          })
-                                        : null
-                                }
-                            </Route>
-                        )
-                )}
+                {Children.map(children, (tab: ReactElement, index) => {
+                    if (!tab) {
+                        return;
+                    }
+                    const tabPath = getTabFullPath(tab, index, url);
+                    return (
+                        <Route exact path={escapePath(tabPath)}>
+                            {routeProps =>
+                                isValidElement<any>(tab)
+                                    ? React.cloneElement(tab, {
+                                          intent: 'content',
+                                          classes,
+                                          resource,
+                                          record,
+                                          basePath,
+                                          hidden: !routeProps.match,
+                                          variant: tab.props.variant || variant,
+                                          margin: tab.props.margin || margin,
+                                          value: tabPath,
+                                      })
+                                    : null
+                            }
+                        </Route>
+                    );
+                })}
             </div>
             {toolbar &&
                 React.cloneElement(toolbar, {
@@ -282,7 +278,6 @@ TabbedFormView.propTypes = {
     saving: PropTypes.bool,
     submitOnEnter: PropTypes.bool,
     tabs: PropTypes.element.isRequired,
-    tabsWithErrors: PropTypes.arrayOf(PropTypes.string),
     toolbar: PropTypes.element,
     translate: PropTypes.func,
     undoable: PropTypes.bool,
@@ -344,7 +339,13 @@ const sanitizeRestProps = ({
     ...props
 }) => props;
 
+export default TabbedForm;
+
 export const findTabsWithErrors = (children, errors) => {
+    console.warn(
+        'Deprecated. FormTab now wrap their content inside a FormGroupContextProvider. If you implemented custom forms with tabs, please use the FormGroupContextProvider. See https://marmelab.com/react-admin/CreateEdit.html#grouping-inputs'
+    );
+
     return Children.toArray(children).reduce((acc: any[], child) => {
         if (!isValidElement(child)) {
             return acc;
@@ -364,5 +365,3 @@ export const findTabsWithErrors = (children, errors) => {
         return acc;
     }, []);
 };
-
-export default TabbedForm;
