@@ -26,6 +26,7 @@ import {
 import InputHelperText from './InputHelperText';
 import AutocompleteSuggestionList from './AutocompleteSuggestionList';
 import AutocompleteSuggestionItem from './AutocompleteSuggestionItem';
+import { AutocompleteInputLoader } from './AutocompleteInputLoader';
 
 interface Options {
     suggestionsContainerProps?: any;
@@ -112,6 +113,8 @@ const AutocompleteInput: FunctionComponent<AutocompleteInputProps> = props => {
         isRequired: isRequiredOverride,
         label,
         limitChoicesToValue,
+        loaded,
+        loading,
         margin = 'dense',
         matchSuggestion,
         meta: metaOverride,
@@ -355,7 +358,12 @@ const AutocompleteInput: FunctionComponent<AutocompleteInputProps> = props => {
 
     const getEndAdornment = openMenu => {
         if (!resettable) {
-            return endAdornment;
+            if (endAdornment) {
+                return endAdornment;
+            }
+            if (loading) {
+                return <AutocompleteInputLoader />;
+            }
         } else if (!filterValue) {
             const label = translate('ra.action.clear_input_value');
             if (clearAlwaysVisible) {
@@ -376,6 +384,7 @@ const AutocompleteInput: FunctionComponent<AutocompleteInputProps> = props => {
                                 )}
                             />
                         </IconButton>
+                        {loading && <AutocompleteInputLoader />}
                     </InputAdornment>
                 );
             } else {
@@ -386,6 +395,7 @@ const AutocompleteInput: FunctionComponent<AutocompleteInputProps> = props => {
                     return (
                         <InputAdornment position="end">
                             <span className={classes.clearButton}>&nbsp;</span>
+                            {loading && <AutocompleteInputLoader />}
                         </InputAdornment>
                     );
                 }
@@ -411,6 +421,7 @@ const AutocompleteInput: FunctionComponent<AutocompleteInputProps> = props => {
                             })}
                         />
                     </IconButton>
+                    {loading && <AutocompleteInputLoader />}
                 </InputAdornment>
             );
         }
@@ -586,6 +597,8 @@ export interface AutocompleteInputProps
         Omit<DownshiftProps<any>, 'onChange'> {
     clearAlwaysVisible?: boolean;
     resettable?: boolean;
+    loaded?: boolean;
+    loading?: boolean;
 }
 
 export default AutocompleteInput;
